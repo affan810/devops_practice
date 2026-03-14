@@ -33,12 +33,13 @@ stages {
         steps {
             echo "Pushing image to Docker Hub..."
 
-            withCredentials([usernamePassword(
-                credentialsId: 'dockerhub-credentials',
-                usernameVariable: 'DOCKER_USER',
-                passwordVariable: 'DOCKER_PASS'
-            )]) {
-
+            withCredentials([
+                usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )
+            ]) {
                 sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                 sh 'docker tag scientific-calculator affan810/scientific-calculator:latest'
                 sh 'docker push affan810/scientific-calculator:latest'
@@ -57,7 +58,7 @@ stages {
 post {
 
     success {
-        emailext (
+        emailext(
             subject: "Jenkins Pipeline SUCCESS",
             body: """
 ```
@@ -74,7 +75,7 @@ to: "[shaikhaffan810@gmail.com](mailto:shaikhaffan810@gmail.com)"
 
 ```
     failure {
-        emailext (
+        emailext(
             subject: "Jenkins Pipeline FAILED",
             body: """
 ```
