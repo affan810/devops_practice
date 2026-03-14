@@ -1,0 +1,15 @@
+---
+- name: Deploy Scientific Calculator Container
+  hosts: calculator
+  become: false
+
+  tasks:
+    - name: Pull Docker image
+      command: docker pull 3piradians/scientific-calculator:latest
+
+    - name: Remove old container if exists
+      command: docker rm -f calculator-container
+      ignore_errors: true
+
+    - name: Run new container
+      command: docker run -d --name calculator-container 3piradians/scientific-calculator:latest
