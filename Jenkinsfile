@@ -1,85 +1,83 @@
 pipeline {
-agent any
+    agent any
 
-```
-environment {
-    PATH = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-}
-
-stages {
-
-    stage('Build Calculator') {
-        steps {
-            echo "Building calculator..."
-            sh 'make build'
-        }
+    environment {
+        PATH = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
     }
 
-    stage('Test Calculator') {
-        steps {
-            echo "Running tests..."
-            sh 'make test'
+    stages {
+
+        stage('Build Calculator') {
+            steps {
+                echo "Building calculator..."
+                sh 'make build'
+            }
         }
-    }
 
-    stage('Docker Build') {
-        steps {
-            echo "Building Docker image..."
-            sh 'docker build -t scientific-calculator .'
+        stage('Test Calculator') {
+            steps {
+                echo "Running tests..."
+                sh 'make test'
+            }
         }
-    }
 
-    stage('Docker Push') {
-        steps {
-            echo "Pushing image to Docker Hub..."
+        stage('Docker Build') {
+            steps {
+                echo "Building Docker image..."
+                sh 'docker build -t scientific-calculator .'
+            }
+        }
 
-            withCredentials([
-                usernamePassword(
-                    credentialsId: 'dockerhub-credentials',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )
-            ]) {
-                sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                sh 'docker tag scientific-calculator affan810/scientific-calculator:latest'
-                sh 'docker push affan810/scientific-calculator:latest'
+        stage('Docker Push') {
+            steps {
+                echo "Pushing image to Docker Hub..."
+
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+
+                    sh '''
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    docker tag scientific-calculator affan810/scientific-calculator:latest
+                    docker push affan810/scientific-calculator:latest
+                    docker logout
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Calculator') {
+            steps {
+                echo "Deploying container using Ansible..."
+                sh 'ansible-playbook -i ansible/hosts ansible/deploy.yml'
             }
         }
     }
 
-    stage('Deploy Calculator') {
-        steps {
-            echo "Deploying container using Ansible..."
-            sh 'ansible-playbook -i ansible/hosts ansible/deploy.yml'
-        }
-    }
-}
+    post {
 
-post {
-
-    success {
-        emailext(
-            subject: "Jenkins Pipeline SUCCESS",
-            body: """
-```
-
+        success {
+            emailext(
+                subject: "Jenkins Pipeline SUCCESS",
+                body: """
 Build Successful!
 
 Job: ${env.JOB_NAME}
 Build Number: ${env.BUILD_NUMBER}
 Build URL: ${env.BUILD_URL}
 """,
-to: "[shaikhaffan810@gmail.com](mailto:shaikhaffan810@gmail.com)"
-)
-}
+                to: "shaikhaffan810@gmail.com"
+            )
+        }
 
-```
-    failure {
-        emailext(
-            subject: "Jenkins Pipeline FAILED",
-            body: """
-```
-
+        failure {
+            emailext(
+                subject: "Jenkins Pipeline FAILED",
+                body: """
 Build Failed!
 
 Job: ${env.JOB_NAME}
@@ -88,8 +86,8 @@ Build Number: ${env.BUILD_NUMBER}
 Check logs here:
 ${env.BUILD_URL}
 """,
-to: "[shaikhaffan810@gmail.com](mailto:shaikhaffan810@gmail.com)"
-)
-}
-}
+                to: "shaikhaffan810@gmail.com"
+            )
+        }
+    }
 }
