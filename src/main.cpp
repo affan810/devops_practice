@@ -9,7 +9,7 @@ int main() {
   int choice;
 
   while (true) {
-    cout << "\n=== Welcome to the Scientific Calculator ===" << endl;
+    cout << "\n= Scientific Calculator =" << endl;
     cout << "Please select an operation:" << endl;
     cout << "  1. Addition" << endl;
     cout << "  2. Subtraction" << endl;
