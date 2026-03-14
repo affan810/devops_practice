@@ -2,9 +2,8 @@ pipeline {
     agent any
 
     environment {
-        environment {
-    PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-}
+        PATH+EXTRA = "/usr/local/bin:/opt/homebrew/bin"
+        IMAGE_NAME = "affan810/scientific-calculator"
     }
 
     stages {
@@ -41,9 +40,18 @@ pipeline {
                         passwordVariable: 'DOCKER_PASS'
                     )
                 ]) {
-                    sh  'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
-                    sh 'docker tag scientific-calculator affan810/scientific-calculator:latest'
-                    sh 'docker push affan810/scientific-calculator:latest'
+
+                    sh '''
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+                    docker tag scientific-calculator $IMAGE_NAME:latest
+                    docker tag scientific-calculator $IMAGE_NAME:$BUILD_NUMBER
+
+                    docker push $IMAGE_NAME:latest
+                    docker push $IMAGE_NAME:$BUILD_NUMBER
+
+                    docker logout
+                    '''
                 }
             }
         }
